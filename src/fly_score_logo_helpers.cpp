@@ -10,10 +10,6 @@
 #include <QDir>
 #include <QCryptographicHash>
 
-// -----------------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------------
-
 QString fly_normalized_ext_from_mime(const QString &path)
 {
 	QMimeDatabase db;
@@ -46,22 +42,16 @@ static QString fly_short_hash_of_file(const QString &path)
 	return QString::fromLatin1(h.result().toHex().left(8));
 }
 
-// Small helper: normalize document root
 static QString fly_doc_root(const QString &dataDir)
 {
 	return QDir(dataDir).absolutePath();
 }
-
-// -----------------------------------------------------------------------------
-// Public API
-// -----------------------------------------------------------------------------
 
 QString fly_copy_logo_to_overlay(const QString &dataDir, const QString &srcAbs, const QString &baseName)
 {
 	if (srcAbs.isEmpty())
 		return QString();
 
-	// ❗ dataDir is now treated as the *docRoot* directly, no "overlay" subfolder
 	const QString rootDirPath = fly_doc_root(dataDir);
 	QDir rootDir(rootDirPath);
 	if (!rootDir.exists()) {
@@ -71,7 +61,6 @@ QString fly_copy_logo_to_overlay(const QString &dataDir, const QString &srcAbs, 
 		}
 	}
 
-	// Clean existing with same basename in docRoot (baseName*.*)
 	const auto files = rootDir.entryList(QStringList{QString("%1*.*").arg(baseName)}, QDir::Files);
 	for (const auto &fn : files)
 		QFile::remove(rootDir.filePath(fn));
@@ -91,7 +80,6 @@ QString fly_copy_logo_to_overlay(const QString &dataDir, const QString &srcAbs, 
 
 	LOGI("Logo copied to docRoot: %s (rel=%s)", dst.toUtf8().constData(), rel.toUtf8().constData());
 
-	// Return path *relative to docRoot* (e.g. "home-1234abcd.png")
 	return rel;
 }
 
@@ -101,8 +89,6 @@ bool fly_delete_logo_if_exists(const QString &dataDir, const QString &relPath)
 	if (trimmed.isEmpty())
 		return false;
 
-	// Previously: dataDir/overlay/relPath
-	// Now:       dataDir/relPath  (docRoot)
 	const QString abs = QDir(fly_doc_root(dataDir)).filePath(trimmed);
 	if (QFile::exists(abs)) {
 		if (!QFile::remove(abs)) {
@@ -117,7 +103,6 @@ bool fly_delete_logo_if_exists(const QString &dataDir, const QString &relPath)
 
 void fly_clean_overlay_prefix(const QString &dataDir, const QString &basePrefix)
 {
-	// Name stays the same for compatibility, but now cleans inside docRoot
 	const QString rootDirPath = fly_doc_root(dataDir);
 	QDir d(rootDirPath);
 	if (!d.exists())

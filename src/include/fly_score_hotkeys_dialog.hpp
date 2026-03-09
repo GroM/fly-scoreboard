@@ -9,11 +9,10 @@ class QKeySequenceEdit;
 class QPushButton;
 class QStackedWidget;
 
-// Simple binding descriptor
 struct FlyHotkeyBinding {
-	QString actionId;      // e.g. "home_score_inc", "field_0_home_inc", "timer_1_toggle"
-	QString label;         // Human readable label
-	QKeySequence sequence; // Assigned shortcut (can be empty)
+	QString actionId;
+	QString label;
+	QKeySequence sequence;
 };
 
 class FlyHotkeysDialog : public QDialog {
@@ -37,7 +36,7 @@ private:
 		QString actionId;
 		QString label;
 		QKeySequenceEdit *edit = nullptr;
-		int section = 0; // 0 = scoreboard, 1 = fields, 2 = timers
+		int section = 0;
 	};
 
 	void buildUi(const QVector<FlyHotkeyBinding> &initial);
@@ -46,22 +45,12 @@ private:
 	void setActiveSectionButton(int index);
 
 	QVector<RowWidgets> rows_;
-
-	// Center content (right side)
 	QStackedWidget *stack_ = nullptr;
-
-	// Left-side navigation buttons
 	QPushButton *btnNavScore_ = nullptr;
 	QPushButton *btnNavFields_ = nullptr;
 	QPushButton *btnNavTimers_ = nullptr;
-
-	// Bottom actions
 	QPushButton *btnResetAll_ = nullptr;
 };
-
-// -----------------------------------------------------------------------------
-// Persisted hotkey storage (hotkeys.json, next to plugin.json)
-// -----------------------------------------------------------------------------
 
 QVector<FlyHotkeyBinding> fly_hotkeys_load(const QString &dataDir);
 bool fly_hotkeys_save(const QString &dataDir, const QVector<FlyHotkeyBinding> &bindings);

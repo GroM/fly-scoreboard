@@ -40,10 +40,6 @@ static void refreshSourceSettings(obs_source_t *s)
 #include <QDir>
 #include <cstring>
 
-// -----------------------------------------------------------------------------
-// Create/update Browser Source in current scene
-// -----------------------------------------------------------------------------
-
 #ifdef ENABLE_FRONTEND_API
 static obs_scene_t *fly_get_current_scene()
 {
@@ -73,12 +69,10 @@ bool fly_ensure_browser_source_in_current_scene(const QString &urlOrLocalIndex, 
 	    return false;
     }
 
-    // If urlOrLocalIndex points to an existing file, use the Browser Source "Local File" mode.
     const bool isLocal = QFileInfo::exists(urlOrLocalIndex);
     const QString localIndex = isLocal ? QDir::cleanPath(urlOrLocalIndex) : QString();
     const QString url = isLocal ? QString() : urlOrLocalIndex;
 
-    // Find existing browser source item by name
     obs_sceneitem_t *item = nullptr;
     obs_source_t *br = nullptr;
 
@@ -109,24 +103,20 @@ bool fly_ensure_browser_source_in_current_scene(const QString &urlOrLocalIndex, 
 			return true;
 		},
 		&ctx);
-// NOTE: obs_sceneitem_get_source returns a borrowed pointer; obtain a ref-counted one.
-    if (item) {
-	    obs_source_t *borrowed = obs_sceneitem_get_source(item);
-	    if (borrowed)
-		    br = obs_source_get_ref(borrowed);
-    }
+	if (item) {
+		obs_source_t *borrowed = obs_sceneitem_get_source(item);
+		if (borrowed)
+			br = obs_source_get_ref(borrowed);
+	}
 
     obs_data_t *settings = obs_data_create();
     obs_data_set_int(settings, "width", kBrowserWidth);
     obs_data_set_int(settings, "height", kBrowserHeight);
-
-    // Always clear CSS from plugin-managed source, to avoid stale user CSS
     obs_data_set_string(settings, "css", "");
 
     if (isLocal) {
 	    obs_data_set_bool(settings, "is_local_file", true);
 	    obs_data_set_string(settings, "local_file", localIndex.toUtf8().constData());
-	    // Some OBS builds still read "url" even for local file; keep it empty.
 	    obs_data_set_string(settings, "url", "");
     } else {
 	    obs_data_set_bool(settings, "is_local_file", false);
@@ -145,7 +135,6 @@ bool fly_ensure_browser_source_in_current_scene(const QString &urlOrLocalIndex, 
 	    return true;
     }
 
-    // Create
     br = obs_source_create_private(kBrowserSourceId, browserSourceName.toUtf8().constData(), settings);
     if (!br) {
 	    LOGW("Failed to create Browser Source");
@@ -156,10 +145,8 @@ bool fly_ensure_browser_source_in_current_scene(const QString &urlOrLocalIndex, 
 
     item = obs_scene_add(scene, br);
 
-    // Force refresh/no-cache for browser source
     refreshSourceSettings(br);
 
-    // Position
     vec2 pos = {40.0f, 40.0f};
     obs_sceneitem_set_pos(item, &pos);
 

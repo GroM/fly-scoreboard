@@ -64,37 +64,34 @@ static FlyTimer makeDefaultMainTimer()
 
 static void ensureDefaultCustomFields(FlyState &st)
 {
-	auto ensureAt = [&](int index, const QString &label) {
-		if (st.custom_fields.size() <= index)
-			st.custom_fields.resize(index + 1);
+	if (st.custom_fields.isEmpty()) {
+		FlyCustomField cf;
+		cf.label = QStringLiteral("Points");
+		cf.home = 0;
+		cf.away = 0;
+		cf.visible = true;
+		st.custom_fields.push_back(cf);
+		return;
+	}
 
-		FlyCustomField &cf = st.custom_fields[index];
-		if (cf.label.isEmpty())
-			cf.label = label;
-	};
-
-	ensureAt(0, QStringLiteral("Points"));
-	ensureAt(1, QStringLiteral("Score"));
+	if (st.custom_fields[0].label.isEmpty())
+		st.custom_fields[0].label = QStringLiteral("Points");
 }
-
 
 static void ensureDefaultSingleStats(FlyState &st)
 {
-	// Single stats are independent from Home/Guests (e.g., Period/Round).
-	auto ensureAt = [&](int index, const QString &label) {
-		if (st.single_stats.size() <= index)
-			st.single_stats.resize(index + 1);
+	if (st.single_stats.isEmpty()) {
+		FlySingleStat ss;
+		ss.label = QStringLiteral("PERIOD");
+		ss.value = 0;
+		ss.visible = true;
+		st.single_stats.push_back(ss);
+		return;
+	}
 
-		FlySingleStat &ss = st.single_stats[index];
-		if (ss.label.isEmpty())
-			ss.label = label;
-	};
-
-	ensureAt(0, QStringLiteral("PERIOD"));
-	ensureAt(1, QStringLiteral("ROUND"));
+	if (st.single_stats[0].label.isEmpty())
+		st.single_stats[0].label = QStringLiteral("PERIOD");
 }
-
-
 
 static QJsonObject timerToJson(const FlyTimer &t)
 {
@@ -132,35 +129,21 @@ static QJsonObject toJson(const FlyState &stIn)
     QJsonObject j;
     j["version"] = 4;
 
-    // ---------------------------------------------------------------------
-    // Server
-    // ---------------------------------------------------------------------
-    // Teams
-    // ---------------------------------------------------------------------
     auto teamToJson = [](const FlyTeam &tm) {
         QJsonObject o;
         o["title"] = tm.title;
         o["subtitle"] = tm.subtitle;
-        o["logo"]     = tm.logo;
-
-        // Store as number (best practice for OBS integration)
-        o["color"]    = QString::number(tm.color);
+	o["logo"] = tm.logo;
+	o["color"]    = QString::number(tm.color);
 
         return o;
     };
 
     j["home"] = teamToJson(st.home);
     j["away"] = teamToJson(st.away);
-
-    // ---------------------------------------------------------------------
-    // Flags
-    // ---------------------------------------------------------------------
     j["swap_sides"]      = st.swap_sides;
     j["show_scoreboard"] = st.show_scoreboard;
 
-    // ---------------------------------------------------------------------
-    // Custom Fields
-    // ---------------------------------------------------------------------
     QJsonArray cfArr;
     for (const auto &cf : st.custom_fields) {
         QJsonObject o;
@@ -172,9 +155,6 @@ static QJsonObject toJson(const FlyState &stIn)
     }
     j["custom_fields"] = cfArr;
 
-    // -----------------------------
-    // Single stats
-    // -----------------------------
     QJsonArray ssArr;
     for (const auto &ss : st.single_stats) {
         QJsonObject o;
@@ -185,9 +165,6 @@ static QJsonObject toJson(const FlyState &stIn)
     }
     j["single_stats"] = ssArr;
 
-    // ---------------------------------------------------------------------
-    // Timers
-    // ---------------------------------------------------------------------
     QJsonArray timersArr;
     if (st.timers.isEmpty()) {
         timersArr.append(timerToJson(makeDefaultMainTimer()));
@@ -203,136 +180,113 @@ static QJsonObject toJson(const FlyState &stIn)
 
 static bool fromJson(const QJsonObject &j, FlyState &st)
 {
-    // ---------------------------------------------------------------------
-    // Server
-    // ---------------------------------------------------------------------
-    // Helper: robust color reader
-    // ---------------------------------------------------------------------
-    auto readColor = [](const QJsonObject &o, const char *key, uint32_t def = 0xFFFFFF) -> uint32_t {
-        const QJsonValue v = o.value(key);
+	auto readColor = [](const QJsonObject &o, const char *key, uint32_t def = 0xFFFFFF) -> uint32_t {
+		const QJsonValue v = o.value(key);
 
-        if (v.isDouble())
-            return static_cast<uint32_t>(v.toInt());
+		if (v.isDouble())
+			return static_cast<uint32_t>(v.toInt());
 
-        if (v.isString()) {
-            QString s = v.toString().trimmed();
-            if (s.startsWith("0x", Qt::CaseInsensitive))
-                return s.mid(2).toUInt(nullptr, 16);
-            return s.toUInt(nullptr, 10);
-        }
+		if (v.isString()) {
+			QString s = v.toString().trimmed();
+			if (s.startsWith("0x", Qt::CaseInsensitive))
+				return s.mid(2).toUInt(nullptr, 16);
+			return s.toUInt(nullptr, 10);
+		}
 
-        return def;
-    };
+		return def;
+	};
 
-    // ---------------------------------------------------------------------
-    // Teams
-    // ---------------------------------------------------------------------
-    auto readTeam = [&](const QJsonObject &o) {
-        FlyTeam tm;
-        tm.title    = o.value("title").toString();
-        tm.subtitle = o.value("subtitle").toString();
-        tm.logo     = o.value("logo").toString();
-        tm.color    = readColor(o, "color", 0xFFFFFF);
-        return tm;
-    };
+	auto readTeam = [&](const QJsonObject &o) {
+		FlyTeam tm;
+		tm.title = o.value("title").toString();
+		tm.subtitle = o.value("subtitle").toString();
+		tm.logo = o.value("logo").toString();
+		tm.color = readColor(o, "color", 0xFFFFFF);
+		return tm;
+	};
 
-    st.home = readTeam(j.value("home").toObject());
-    st.away = readTeam(j.value("away").toObject());
+	st.home = readTeam(j.value("home").toObject());
+	st.away = readTeam(j.value("away").toObject());
+	st.swap_sides = j.value("swap_sides").toBool(false);
+	st.show_scoreboard = j.value("show_scoreboard").toBool(true);
+	st.custom_fields.clear();
 
-    // ---------------------------------------------------------------------
-    // Flags
-    // ---------------------------------------------------------------------
-    st.swap_sides      = j.value("swap_sides").toBool(false);
-    st.show_scoreboard = j.value("show_scoreboard").toBool(true);
+	const QJsonValue cfVal = j.value("custom_fields");
+	if (cfVal.isArray()) {
+		const QJsonArray cfArr = cfVal.toArray();
+		st.custom_fields.reserve(cfArr.size());
 
-    // ---------------------------------------------------------------------
-    // Custom Fields
-    // ---------------------------------------------------------------------
-    st.custom_fields.clear();
+		for (const QJsonValue v : cfArr) {
+			if (!v.isObject())
+				continue;
 
-    const QJsonValue cfVal = j.value("custom_fields");
-    if (cfVal.isArray()) {
-        const QJsonArray cfArr = cfVal.toArray();
-        st.custom_fields.reserve(cfArr.size());
+			const QJsonObject o = v.toObject();
 
-        for (const QJsonValue v : cfArr) {
-            if (!v.isObject())
-                continue;
+			FlyCustomField cf;
+			cf.label = o.value("label").toString();
+			cf.home = o.value("home").toInt(0);
+			cf.away = o.value("away").toInt(0);
+			cf.visible = o.value("visible").toBool(true);
 
-            const QJsonObject o = v.toObject();
+			st.custom_fields.push_back(cf);
+		}
+	}
 
-            FlyCustomField cf;
-            cf.label   = o.value("label").toString();
-            cf.home    = o.value("home").toInt(0);
-            cf.away    = o.value("away").toInt(0);
-            cf.visible = o.value("visible").toBool(true);
+	st.single_stats.clear();
 
-            st.custom_fields.push_back(cf);
-        }
-    }
+	const QJsonValue ssVal = j.value("single_stats");
+	if (ssVal.isArray()) {
+		const QJsonArray ssArr = ssVal.toArray();
+		st.single_stats.reserve(ssArr.size());
 
-    // ---------------------------------------------------------------------
-    // Single Stats
-    // ---------------------------------------------------------------------
-    st.single_stats.clear();
+		for (const QJsonValue v : ssArr) {
+			if (!v.isObject())
+				continue;
 
-    const QJsonValue ssVal = j.value("single_stats");
-    if (ssVal.isArray()) {
-        const QJsonArray ssArr = ssVal.toArray();
-        st.single_stats.reserve(ssArr.size());
+			const QJsonObject o = v.toObject();
 
-        for (const QJsonValue v : ssArr) {
-            if (!v.isObject())
-                continue;
+			FlySingleStat ss;
+			ss.label = o.value("label").toString();
+			ss.value = o.value("value").toInt(0);
+			ss.visible = o.value("visible").toBool(true);
 
-            const QJsonObject o = v.toObject();
+			st.single_stats.push_back(ss);
+		}
+	}
 
-            FlySingleStat ss;
-            ss.label   = o.value("label").toString();
-            ss.value   = o.value("value").toInt(0);
-            ss.visible = o.value("visible").toBool(true);
+	ensureDefaultSingleStats(st);
+	ensureDefaultCustomFields(st);
 
-            st.single_stats.push_back(ss);
-        }
-    }
+	st.timers.clear();
 
-    ensureDefaultSingleStats(st);
+	const QJsonValue timersVal = j.value("timers");
+	if (timersVal.isArray()) {
+		const QJsonArray timersArr = timersVal.toArray();
 
-    ensureDefaultCustomFields(st);
+		if (!timersArr.isEmpty()) {
+			st.timers.reserve(timersArr.size());
 
-    // ---------------------------------------------------------------------
-    // Timers
-    // ---------------------------------------------------------------------
-    st.timers.clear();
+			for (const QJsonValue v : timersArr) {
+				if (!v.isObject())
+					continue;
 
-    const QJsonValue timersVal = j.value("timers");
-    if (timersVal.isArray()) {
-        const QJsonArray timersArr = timersVal.toArray();
+				st.timers.push_back(timerFromJson(v.toObject()));
+			}
+		}
+	} else {
+		const QJsonObject tObj = j.value("timer").toObject();
+		if (!tObj.isEmpty())
+			st.timers.push_back(timerFromJson(tObj));
+	}
 
-        if (!timersArr.isEmpty()) {
-            st.timers.reserve(timersArr.size());
+	if (st.timers.isEmpty())
+		st.timers.push_back(makeDefaultMainTimer());
 
-            for (const QJsonValue v : timersArr) {
-                if (!v.isObject())
-                    continue;
+	FlyTimer &main = st.timers[0];
+	if (main.mode.isEmpty())
+		main.mode = "countdown";
 
-                st.timers.push_back(timerFromJson(v.toObject()));
-            }
-        }
-    } else {
-        const QJsonObject tObj = j.value("timer").toObject();
-        if (!tObj.isEmpty())
-            st.timers.push_back(timerFromJson(tObj));
-    }
-
-    if (st.timers.isEmpty())
-        st.timers.push_back(makeDefaultMainTimer());
-
-    FlyTimer &main = st.timers[0];
-    if (main.mode.isEmpty())
-        main.mode = "countdown";
-
-    return true;
+	return true;
 }
 
 bool fly_state_read_json(const std::string &base_dir_s, std::string &out_json)

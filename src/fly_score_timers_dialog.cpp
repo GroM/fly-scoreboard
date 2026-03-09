@@ -227,7 +227,6 @@ void FlyTimersDialog::saveToState()
 		tm.running = false;
 		tm.last_tick_ms = 0;
 
-		// Preserve previous visible flag if it exists; default to true for new timers
 		if (i < oldTimers.size()) {
 			tm.visible = oldTimers[i].visible;
 		} else {

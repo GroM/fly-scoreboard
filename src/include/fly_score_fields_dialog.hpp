@@ -43,6 +43,7 @@ private:
 	void buildUi();
 	void loadFromState();
 	void saveToState();
+	void refreshRemoveButtons();
 	Row addRow(const FlyCustomField &cf, bool canRemove);
 	SingleRow addSingleRow(const FlySingleStat &ss);
 

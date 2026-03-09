@@ -12,7 +12,7 @@
 <body>
   <div class="hs-wrap">
     <div id="scoreboard" class="{{show_scoreboard ? 'hs-board' : 'hs-board is-hidden'}}">
-  
+
       <div class="hs-main">
         <div class="hs-team hs-team-x" style="--team-accent: {{team_x.color}}">
           <div class="hs-stripe"></div>
@@ -21,12 +21,12 @@
           </div>
 
           <div class="hs-meta">
-            <div class="hs-abbr">{{team_x.subtitle}}</div>
-            <div class="hs-name">{{team_x.title}}</div>
+            <div class="hs-abbr">{{team_x.title}}</div>
+            <div class="hs-name">{{team_x.subtitle}}</div>
           </div>
 
           <div class="hs-score" id="hsScoreX">{{fields_xy[0].x}}</div>
-          </div>
+        </div>
 
         <div class="hs-center">
           <div class="hs-clock-wrap" fs-if="timers[0] && timers[0].visible">
@@ -45,21 +45,21 @@
           <div class="hs-score" id="hsScoreY">{{fields_xy[0].y}}</div>
 
           <div class="hs-meta text-right">
-            <div class="hs-abbr">{{team_y.subtitle}}</div>
-            <div class="hs-name">{{team_y.title}}</div>
+            <div class="hs-abbr">{{team_y.title}}</div>
+            <div class="hs-name">{{team_y.sub}}</div>
           </div>
 
           <div class="hs-logo" fs-if="team_y.logo">
             <img alt="" src="{{team_y.logo}}" />
           </div>
-<div class="hs-stripe"></div>
+          <div class="hs-stripe"></div>
         </div>
       </div>
 
       <div class="hs-details {{show_scoreboard && (fields_xy[2] && fields_xy[2].visible) ? '' : 'is-hidden'}}">
         <div class="hs-chip">
           <span class="hs-chip-label">{{fields_xy[2].label}}</span>
-          <span class="hs-chip-val">{{fields_xy[2].x}} — {{fields_xy[2].y}}</span>
+          <span class="hs-chip-val">{{fields_xy[2].x}} - {{fields_xy[2].y}}</span>
         </div>
 
         <div class="hs-penalty-wrap" fs-if="timers[1] && timers[1].visible">

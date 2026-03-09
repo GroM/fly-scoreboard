@@ -32,20 +32,15 @@ private:
 private:
     QString  dataDir_;
     FlyState &state_;
-
-    // Home team
     QLineEdit   *homeTitle_  = nullptr;
     QLineEdit   *homeSub_    = nullptr;
     QLineEdit   *homeLogo_   = nullptr;
     QToolButton *homeBrowse_ = nullptr;
-    QToolButton *homeColor_  = nullptr; // NEW
-
-    // Guests team
+    QToolButton *homeColor_ = nullptr;
     QLineEdit   *awayTitle_  = nullptr;
     QLineEdit   *awaySub_    = nullptr;
     QLineEdit   *awayLogo_   = nullptr;
     QToolButton *awayBrowse_ = nullptr;
-    QToolButton *awayColor_  = nullptr; // NEW
-
+    QToolButton *awayColor_ = nullptr;
     QPushButton *applyBtn_   = nullptr;
 };

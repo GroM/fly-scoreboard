@@ -21,6 +21,4 @@ void fly_style_icon_only_button(QAbstractButton *b,
 
 qint64 fly_parse_mmss_to_ms(const QString &txt);
 QString fly_format_ms_mmss(qint64 ms);
-
-/// Adds/updates cb=<timestamp> query param
 QString fly_cache_bust_url(const QString &in);
