@@ -4,6 +4,7 @@
 #include <QString>
 #include <QList>
 #include <QKeySequence>
+#include <QToolButton>
 
 #include "fly_score_state.hpp"
 
