@@ -1,0 +1,22 @@
+name: Test Overlay
+on:
+  push:
+    paths:
+      - data/overlay/script.js
+      - tests/**
+      - .github/workflows/test-overlay.yaml
+  pull_request:
+    paths:
+      - data/overlay/script.js
+      - tests/**
+      - .github/workflows/test-overlay.yaml
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/overlay-timer.test.cjs

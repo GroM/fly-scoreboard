@@ -9,6 +9,7 @@
 !/installer
 !/docs
 !/src
+!/tests
 !.clang-format
 !.gitignore
 !.gitattributes

@@ -1,3 +1,8 @@
+# Unreleased
+
+- Fixed overlay timers reverting to older file state after three seconds without a WebSocket update, and delayed file reads overwriting newer live updates.
+- For existing copied templates, replace their `script.js` with the updated `data/overlay/script.js` (or the script from the newly installed Modular Football template), then refresh the OBS Browser Sources using them.
+
 # Fly Scoreboard 5.0.0
 
 Fly Scoreboard 5.0 is a major update focused on modular sports graphics, simpler control, and a clearer setup experience.

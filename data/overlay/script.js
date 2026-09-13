@@ -408,7 +408,8 @@ function applyIfBindings(data) {
 let currentJsonState = null;
 let socket = null;
 let socketRetryTimer = null;
-let lastSocketStateAt = 0;
+let socketHasState = false;
+let socketStateVersion = 0;
 
 function renderFrame() {
   if (!currentJsonState) return;
@@ -486,9 +487,15 @@ function renderFrame() {
 // -----------------------------------------------------------------------------
 async function pollLoop() {
   try {
-    if (!socket || socket.readyState !== WebSocket.OPEN || Date.now() - lastSocketStateAt > 3000) {
+    // State is broadcast on changes, so a running timer can have a quiet socket
+    // indefinitely. Only use the file until this connection supplies live state.
+    if (!socket || socket.readyState !== WebSocket.OPEN || !socketHasState) {
+      const version = socketStateVersion;
       const st = await fetchState();
-      currentJsonState = st;
+      // A live update may arrive while the file read is in flight.
+      if (version === socketStateVersion) {
+        currentJsonState = st;
+      }
     }
   } catch (e) {
     // ignore; keep last state
@@ -505,6 +512,7 @@ function connectSocket() {
   const params = new URLSearchParams(window.location.search);
   const wsUrl = params.get("ws") || "ws://127.0.0.1:4457";
 
+  socketHasState = false;
   try {
     socket = new WebSocket(wsUrl);
   } catch (e) {
@@ -522,7 +530,8 @@ function connectSocket() {
       const st = normalizeIncomingState(payload);
       if (st) {
         currentJsonState = st;
-        lastSocketStateAt = Date.now();
+        socketHasState = true;
+        socketStateVersion++;
       }
     } catch (e) {
       // ignore malformed remote messages
